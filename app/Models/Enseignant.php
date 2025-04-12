@@ -4,44 +4,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // <-- Ajouté
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Enseignant extends Model
 {
     use HasFactory;
 
-    /**
-     * Attributs assignables massivement.
-     */
+    // Ajout de matiere_principale_id
     protected $fillable = [
         'nom',
         'telephone',
         'commentaires',
-        'schedule_json', // Emploi du temps
+        'schedule_json',
+        'matiere_principale_id', // Clé étrangère vers sa matière principale
     ];
 
     /**
-     * Casts d'attributs (conversion automatique).
+     * Casts d'attributs.
      */
     protected $casts = [
         'schedule_json' => 'array', // Gère JSON <-> Tableau PHP
     ];
 
     /**
-     * Relation: Un Enseignant enseigne Plusieurs Matières (Many-to-Many).
+     * Relation: Un Enseignant a UNE Matière Principale (peut être null).
      */
-    public function matieres(): BelongsToMany
+    public function matierePrincipale(): BelongsTo
     {
-        return $this->belongsToMany(Matiere::class, 'enseignant_matiere', 'enseignant_id', 'matiere_id');
-    }
-
-    /**
-     * Relation: Un Enseignant est responsable de Plusieurs Leçons.
-     */
-    public function leconsResponsable(): HasMany
-    {
-        return $this->hasMany(Lecon::class, 'responsable_id');
+        return $this->belongsTo(Matiere::class, 'matiere_principale_id');
     }
 
     /**
@@ -51,4 +42,9 @@ class Enseignant extends Model
     {
         return $this->hasMany(ReservationStudio::class);
     }
+
+    // Note: La relation directe pour trouver les leçons dont un prof est responsable
+    // se fait maintenant via sa matière principale:
+    // $enseignant->matierePrincipale->chapitres()->with('lecons')->get() ... puis itérer.
+    // Ou une relation HasManyThrough si nécessaire.
 }

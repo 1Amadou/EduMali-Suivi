@@ -10,14 +10,8 @@ class ReservationStudio extends Model
 {
     use HasFactory;
 
-    /**
-     * Le nom explicite de la table.
-     */
     protected $table = 'reservations_studio';
 
-    /**
-     * Attributs assignables massivement.
-     */
     protected $fillable = [
         'enseignant_id',
         'lecon_id',
@@ -28,13 +22,9 @@ class ReservationStudio extends Model
         'studio_id',
     ];
 
-     /**
-     * Casts d'attributs.
-     */
     protected $casts = [
         'date_reservation' => 'date',
         'studio_id' => 'integer',
-        // Les heures sont souvent laissées en string pour H:i:s
     ];
 
     /**

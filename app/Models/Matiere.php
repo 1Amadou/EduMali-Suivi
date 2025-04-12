@@ -6,15 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Matiere extends Model
 {
     use HasFactory;
 
-    /**
-     * Attributs assignables massivement.
-     */
+    // enseignant_responsable_id est retiré, l'enseignant a matiere_principale_id
     protected $fillable = [
         'nom',
         'classe_id',
@@ -37,10 +34,11 @@ class Matiere extends Model
     }
 
     /**
-     * Relation: Une Matière peut être enseignée par Plusieurs Enseignants (Many-to-Many).
+     * Relation: Une Matière peut être la matière principale de Plusieurs Enseignants.
      */
-    public function enseignants(): BelongsToMany
+    public function enseignantsResponsables(): HasMany
     {
-        return $this->belongsToMany(Enseignant::class, 'enseignant_matiere', 'matiere_id', 'enseignant_id');
+        // Cherche les enseignants dont la clé étrangère 'matiere_principale_id' pointe vers cette matière
+        return $this->hasMany(Enseignant::class, 'matiere_principale_id');
     }
 }

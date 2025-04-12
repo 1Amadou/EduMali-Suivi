@@ -11,9 +11,7 @@ class Lecon extends Model
 {
     use HasFactory;
 
-    /**
-     * Attributs assignables massivement.
-     */
+    // Retrait de responsable_id
     protected $fillable = [
         'num',
         'titre',
@@ -22,12 +20,8 @@ class Lecon extends Model
         'duree_min',
         'commentaires',
         'chapitre_id',
-        'responsable_id',
     ];
 
-     /**
-     * Casts d'attributs.
-     */
     protected $casts = [
         'date_enregistrement' => 'date',
         'duree_min' => 'integer',
@@ -42,18 +36,12 @@ class Lecon extends Model
     }
 
     /**
-     * Relation: Une Leçon a un Enseignant responsable (peut être null).
-     */
-    public function responsable(): BelongsTo
-    {
-        return $this->belongsTo(Enseignant::class, 'responsable_id');
-    }
-
-     /**
      * Relation: Une Leçon peut avoir Plusieurs Réservations Studio.
      */
     public function reservationsStudio(): HasMany
     {
         return $this->hasMany(ReservationStudio::class);
     }
+
+    // Pas de relation directe vers le responsable ici
 }

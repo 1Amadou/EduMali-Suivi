@@ -11,9 +11,6 @@ class Chapitre extends Model
 {
     use HasFactory;
 
-    /**
-     * Attributs assignables massivement.
-     */
     protected $fillable = [
         'nom',
         'matiere_id',

@@ -10,13 +10,9 @@ class Classe extends Model
 {
     use HasFactory;
 
-    // Spécifier que l'ID n'est pas numérique et pas auto-incrémenté
-    public $incrementing = false;
-    protected $keyType = 'string';
+    public $incrementing = false; // Clé primaire non incrémentée (VARCHAR)
+    protected $keyType = 'string'; // Type de la clé primaire
 
-    /**
-     * Attributs assignables massivement.
-     */
     protected $fillable = [
         'id',
         'nom',
