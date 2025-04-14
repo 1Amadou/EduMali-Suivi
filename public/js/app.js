@@ -48,10 +48,10 @@ const printFdrBtn = document.getElementById('print-route-btn');
 const routeContent = document.getElementById('feuille-route-content');
 // Accueil / Dashboard --- VÉRIFIER CES LIGNES ---
 const dashboardContent = document.getElementById('dashboard-content');
-const loadingIndicator = document.getElementById('dashboard-loading'); // <-- Doit être là
-const statsContainer = document.getElementById('dashboard-stats-container'); // <-- Doit être là
-const leconsContainer = document.getElementById('dashboard-lecons-container'); // <-- Doit être là
-const planningContainer = document.getElementById('dashboard-planning-container'); // <-- Doit être là
+const loadingIndicator = document.getElementById('dashboard-loading'); 
+const statsContainer = document.getElementById('dashboard-stats-container'); 
+const leconsContainer = document.getElementById('dashboard-lecons-container'); 
+const planningContainer = document.getElementById('dashboard-planning-container'); 
 
 
     // ==========================================================
@@ -137,52 +137,86 @@ const planningContainer = document.getElementById('dashboard-planning-container'
 
     // === PLANIFICATION STUDIO ===
     function renderStudioPlanning(dateString) {
-        if (!studioPlanningView) { console.error("Elem planning view manquant"); return; }
+        const studioPlanningView = document.getElementById('studio-planning-view');
+        if (!studioPlanningView) { console.error("Element studioPlanningView non trouvé"); return; }
     
-        // Forcer/Vérifier le format YYYY-MM-DD avant toute chose
-        let formattedDate = '';
+        let formattedDate = ''; // Variable pour stocker la date formatée YYYY-MM-DD
+    
         try {
-            // Tenter de créer une date valide, en prenant seulement la partie date si format ISO
-            const datePart = dateString.split('T')[0];
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(datePart)) {
-                throw new Error("Format initial non conforme YYYY-MM-DD");
+            if (!dateString) {
+                throw new Error("La date fournie est vide ou nulle.");
             }
-            // Recréer une date pour normaliser (évite problèmes si date invalide comme 31 Fev)
-            const dateObj = new Date(datePart + 'T00:00:00Z'); // Utiliser Z pour UTC et éviter décalage
-            if (isNaN(dateObj.getTime())) {
-                 throw new Error("Date invalide après parsing");
-            }
-             // Re-formater en YYYY-MM-DD depuis l'objet Date (en UTC)
-             const year = dateObj.getUTCFullYear();
-             const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-             const day = String(dateObj.getUTCDate()).padStart(2, '0');
-             formattedDate = `<span class="math-inline">\{year\}\-</span>{month}-${day}`;
     
-             if (!dateRegex.test(formattedDate)) { // Ultime vérification
-                 throw new Error("Format final non conforme YYYY-MM-DD");
-             }
+            // 1. Essayer de parser la date reçue.
+            // On prend la partie avant 'T' si c'est un format ISO et on ajoute T00:00:00Z pour éviter
+            // les décalages de fuseau horaire lors de la création de l'objet Date.
+            const datePart = String(dateString).split('T')[0];
+            const dateObj = new Date(datePart + 'T00:00:00Z'); // Force UTC pour le parsing
+    
+            // 2. Vérifier si l'objet Date est valide
+            if (isNaN(dateObj.getTime())) {
+                throw new Error(`Impossible de parser la date reçue: "${dateString}"`);
+            }
+    
+            // 3. Formater explicitement en YYYY-MM-DD depuis l'objet Date (en utilisant UTC)
+            const year = dateObj.getUTCFullYear();
+            const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); // Mois 0-indexed
+            const day = String(dateObj.getUTCDate()).padStart(2, '0');
+            formattedDate = `${year}-${month}-${day}`;
+    
+            // 4. Ultime vérification du format (sécurité)
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(formattedDate)) {
+                // Ne devrait jamais arriver si les étapes précédentes fonctionnent
+                throw new Error(`Le formatage final de la date a échoué: "${formattedDate}"`);
+            }
     
         } catch (e) {
-            console.error("Erreur formatage/validation date planning:", dateString, e);
-            handleApiError(new Error("Format de date de planning invalide."));
-            studioPlanningView.innerHTML = `<p class="p-4 text-red-500 italic text-sm">Erreur format date.</p>`;
-            return;
+            // Si une erreur survient pendant le parsing/formatage
+            console.error("Erreur interne lors du traitement de la date planning:", e);
+            handleApiError(new Error("Format de date invalide pour le planning.")); // Informe l'utilisateur via l'alerte
+            studioPlanningView.innerHTML = `<p class="p-4 text-red-500 italic text-sm">Erreur interne (format date).</p>`;
+            return; // Arrêter l'exécution
         }
     
-        // Si on arrive ici, formattedDate est en YYYY-MM-DD
-        studioPlanningView.innerHTML = '<p class="p-4 italic text-sm">Chargement...</p>';
-        console.log(`Appel API Planning pour date: ${formattedDate}`); // Log de vérification
+        // --- Si on arrive ici, formattedDate contient YYYY-MM-DD ---
     
+        studioPlanningView.innerHTML = '<p class="p-4 italic text-sm">Chargement du planning...</p>';
+        console.log(`Appel API Planning pour date (formatée): ${formattedDate}`); // Log pour vérifier
+    
+        // Appel à l'API avec la date correctement formatée
         fetch(`/api/planning?date=${formattedDate}`)
             .then(handleApiResponse)
             .then(bookings => {
-                // ... (Affichage du planning comme avant) ...
-                studioPlanningView.innerHTML = ''; if (!bookings || bookings.length === 0) { studioPlanningView.innerHTML = `<p>Aucune réservation pour ${formattedDate}.</p>`; return; } const planningByStudio = {}; bookings.forEach(b => { if(!planningByStudio[b.studio_id]) planningByStudio[b.studio_id] = []; planningByStudio[b.studio_id].push(b); }); Object.keys(planningByStudio).sort().forEach(studioId => { let html = `<h4>Studio ${studioId}</h4>`; const studioBookings = planningByStudio[studioId]; if (studioBookings.length > 0) { html += '<ul>'; studioBookings.sort((a,b)=>a.heure_debut.localeCompare(b.heure_debut)).forEach(b => { const teacher = b.enseignant?.nom || '?'; const start = b.heure_debut.substring(0,5); const end = b.heure_fin.substring(0,5); html += `<li><span class="math-inline">\{start\}\-</span>{end}: <span class="math-inline">\{teacher\} \(</span>{escapeJsString(b.lecon_description||'N/A')}) <button onclick="app.cancelBookingApi(<span class="math-inline">\{b\.id\},'</span>{b.date_reservation}')">(X)</button></li>`; }); html += '</ul>'; } else { html += `<p>Aucune réservation.</p>`; } studioPlanningView.innerHTML += html; });
+                studioPlanningView.innerHTML = ''; // Vider chargement
+                if (!bookings || bookings.length === 0) {
+                    studioPlanningView.innerHTML = `<p class="text-sm italic p-4">Aucune réservation pour ${formattedDate}.</p>`;
+                    return;
+                }
+                // Grouper et afficher les réservations
+                const planningByStudio = {};
+                bookings.forEach(b => { if(!planningByStudio[b.studio_id]) planningByStudio[b.studio_id] = []; planningByStudio[b.studio_id].push(b); });
+                Object.keys(planningByStudio).sort().forEach(studioId => {
+                    let html = `<h4 class="font-semibold mt-3">Studio ${studioId}</h4>`;
+                    const studioBookings = planningByStudio[studioId];
+                    if (studioBookings.length > 0) {
+                        html += '<ul class="list-disc ml-5 text-sm space-y-1">'; // Ajout space-y-1
+                        studioBookings.sort((a,b)=>a.heure_debut.localeCompare(b.heure_debut)).forEach(b => {
+                            const teacher = b.enseignant?.nom || 'Inconnu';
+                            const start = b.heure_debut.substring(0,5);
+                            const end = b.heure_fin.substring(0,5);
+                            html += `<li class="border-b border-gray-100 last:border-b-0 py-0.5">${start} - ${end}: ${teacher} (${escapeJsString(b.lecon_description||'N/A')}) <button class="text-xs text-red-600 hover:text-red-800 ml-1" onclick="app.cancelBookingApi(${b.id}, '${b.date_reservation}')">(Annuler)</button></li>`; // Style bouton
+                        });
+                        html += '</ul>';
+                    } else {
+                        html += `<p class="text-sm italic ml-2">Aucune réservation.</p>`;
+                    }
+                    studioPlanningView.innerHTML += html;
+                });
             })
             .catch(error => {
-                 handleApiError(error); // Gère affichage erreur 422/500 etc.
-                 studioPlanningView.innerHTML = `<p class="p-4 text-red-500 text-sm">Erreur chargement planning.</p>`;
+                 handleApiError(error); // Gère l'affichage des erreurs 4xx/5xx
+                 studioPlanningView.innerHTML = `<p class="p-4 text-red-500 text-sm italic">Erreur chargement planning.</p>`;
             });
     }
     function loadPlannableLessons(teacherId) { if (!planLessonSelect || !planLessonDetailsDiv) return; planLessonSelect.innerHTML = '<option value="">Chargement...</option>'; planLessonSelect.disabled = true; planLessonDetailsDiv.innerHTML = ''; if (!teacherId || teacherId === "") { planLessonSelect.innerHTML = '<option value="">-- Sélectionnez enseignant --</option>'; planLessonSelect.disabled = true; return; } fetch(`/api/enseignants/${teacherId}/lecons-planifiables`).then(handleApiResponse).then(lecons => { console.log(`Leçons reçues pour ${teacherId}:`, lecons); if (!lecons || lecons.length === 0) { planLessonSelect.innerHTML = '<option value="">-- Aucune leçon à planifier --</option>'; } else { planLessonSelect.innerHTML = '<option value="">-- Sélectionnez une leçon --</option>'; lecons.forEach(lecon => { let cN = lecon.chapitre?.matiere?.classe?.nom||'?'; let mN = lecon.chapitre?.matiere?.nom||'?'; let chN = lecon.chapitre?.nom||'?'; let optTxt = `${cN}>${mN}>${chN}>${lecon.num||'?'} ${lecon.titre||''}`; planLessonSelect.add(new Option(optTxt, lecon.id)); }); } planLessonSelect.disabled = false; }).catch(error => { handleApiError(error); planLessonSelect.innerHTML = '<option value="">Erreur chargement</option>'; planLessonSelect.disabled = false; }); }

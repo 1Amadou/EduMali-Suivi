@@ -53,7 +53,7 @@
             <a href="#feuille-route" class="nav-link p-2 rounded hover:bg-indigo-700" data-section="feuille-route">Feuille de Route</a>
         </nav>
         <div class="mt-auto text-xs text-indigo-300 text-center">
-            Version 6.0 (Laravel)
+            Version 6.0 (EduMali Suivu Pédago.)<br>
         </div>
     </aside>
 
@@ -190,7 +190,7 @@
                 <div class="mb-6 flex flex-wrap gap-4 items-end">
                      <div><label for="select-classe-route">Classe:</label><select id="select-classe-route" name="select-classe-route" class="w-auto md:w-64 p-1 border rounded"></select></div>
                      <button id="generate-route-btn" class="secondary text-sm py-1 px-2">Afficher</button>
-                     <button id="generate-blank-route-btn" class="secondary text-sm py-1 px-2">Vierge</button>
+                     <button id="generate-blank-route-btn" class="secondary text-sm py-1 px-2">aperçu</button>
                      <button id="save-route-changes-btn" class="success text-sm py-1 px-2" style="display: none;">Enregistrer Modifs</button>
                      <button id="print-route-btn" class="secondary ml-auto text-sm py-1 px-2 no-print">Imprimer</button>
                 </div>
